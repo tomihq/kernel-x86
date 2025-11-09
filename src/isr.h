@@ -33,6 +33,7 @@ void _isr20();
 
 void _isr32(); // clock
 void _isr33(); // teclado
+void _isr40(); //lector de cartuchos
 
 void _isr88();
 void _isr98();

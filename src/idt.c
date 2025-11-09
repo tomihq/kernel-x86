@@ -94,6 +94,7 @@ void idt_init() {
   // COMPLETAR: Interrupciones de reloj y teclado
   IDT_ENTRY0(32); //timer
   IDT_ENTRY0(33); //keyboard
+  IDT_ENTRY0(40); //hardware lector de cartuchos
 
   // COMPLETAR: Syscalls
   IDT_ENTRY3(88);
