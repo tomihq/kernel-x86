@@ -18,6 +18,7 @@ sched_task_selector:   dw 0xFFFF
 extern process_scancode
 ;; PIC
 extern pic_finish1
+extern pic_finish2 
 ;; Sched
 extern sched_next_task
 extern kernel_exception
@@ -28,6 +29,10 @@ extern tasks_tick
 extern tasks_screen_update
 extern tasks_syscall_draw
 extern tasks_input_process
+
+;; Cartucho
+extern deviceready
+
 
 ;; Definición de MACROS
 ;; -------------------------------------------------------------------------- ;;
@@ -222,7 +227,13 @@ _isr33:
     popad
     iret
 
-
+global _isr40
+_isr40:
+  pushad
+  call pic_finish2 ;¿cae en CMOS clock?
+  call deviceready 
+  popad
+  iret 
 ;; Rutinas de atención de las SYSCALLS
 ;; -------------------------------------------------------------------------- ;;
 

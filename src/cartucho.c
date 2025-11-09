@@ -1,0 +1,3 @@
+void deviceready(void){
+    
+}
