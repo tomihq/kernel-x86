@@ -47,7 +47,7 @@ static int8_t create_task(tipo_e tipo) {
   }
   kassert(gdt_id < GDT_COUNT, "No hay entradas disponibles en la GDT");
 
-  int8_t task_id = sched_add_task(gdt_id << 3);
+  int8_t task_id = sched_add_task(gdt_id << 3); //se desplaza 3 porque el índice ocupa los bits 3-15 del selector. Para acceder a él tengo que hacer gdt_id >> 3 y recién ahí lo encuentro en gdt.
   tss_tasks[task_id] = tss_create_user_task(task_code_start[tipo]);
   gdt[gdt_id] = tss_gdt_entry_for_task(&tss_tasks[task_id]);
   return task_id;
@@ -190,4 +190,13 @@ void tasks_input_process(uint8_t scancode) {
 void tasks_tick(void) {
   ENVIRONMENT->tick_count++;
   ENVIRONMENT->task_id = current_task;
+}
+
+uint32_t task_selector_to_CR3(uint16_t selector) {
+  uint16_t index = selector >> 3;
+  gdt_entry_t* taskDescriptor = &gdt[index]; 
+  tss_t* tss = (tss_t*)((taskDescriptor->base_15_0) |
+  (taskDescriptor->base_23_16 << 16) |
+  (taskDescriptor->base_31_24 << 24));
+  return tss->cr3;
 }
