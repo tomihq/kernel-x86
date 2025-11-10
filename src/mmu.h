@@ -26,6 +26,7 @@ void mmu_init(void);
 paddr_t mmu_next_free_kernel_page(void);
 
 paddr_t mmu_next_free_user_page(void);
+void copy_page(paddr_t dst_addr, paddr_t src_addr);
 
 void mmu_map_page(uint32_t cr3, vaddr_t virt, paddr_t phy, uint32_t attrs);
 
@@ -36,5 +37,6 @@ paddr_t mmu_init_kernel_dir(void);
 paddr_t mmu_init_task_dir(paddr_t phy_start);
 
 bool page_fault_handler(vaddr_t virt);
+paddr_t virt_to_phy(uint32_t cr3, vaddr_t virt);
 
 #endif //  __MMU_H__

@@ -8,6 +8,7 @@
 
 #include "mmu.h"
 #include "i386.h"
+#include "defines.h"
 
 #include "kassert.h"
 
@@ -255,4 +256,19 @@ void test_on_demand_write_1(){
 
 void test_on_demand_write_2(){
   page_fault_handler(0x07000000);
+}
+
+paddr_t virt_to_phy(uint32_t cr3, vaddr_t virt) {
+    uint32_t pd_index = VIRT_PAGE_DIR(virt);
+    uint32_t pt_index = VIRT_PAGE_TABLE(virt);
+
+    pd_entry_t* pd = (pd_entry_t*) CR3_TO_PAGE_DIR(cr3);
+
+    paddr_t pt_phys = MMU_ENTRY_PADDR(pd[pd_index].pt);
+
+    pt_entry_t* pt = (pt_entry_t*) pt_phys;
+
+    paddr_t phy = MMU_ENTRY_PADDR(pt[pt_index].page);
+
+    return phy;
 }

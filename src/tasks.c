@@ -192,11 +192,11 @@ void tasks_tick(void) {
   ENVIRONMENT->task_id = current_task;
 }
 
-uint32_t task_selector_to_CR3(uint16_t selector) {
-  uint16_t index = selector >> 3;
-  gdt_entry_t* taskDescriptor = &gdt[index]; 
-  tss_t* tss = (tss_t*)((taskDescriptor->base_15_0) |
-  (taskDescriptor->base_23_16 << 16) |
-  (taskDescriptor->base_31_24 << 24));
-  return tss->cr3;
+paddr_t task_selector_to_CR3(uint16_t selector) {
+    uint16_t index = selector >> 3; // Sacamos los atributos
+    gdt_entry_t* taskDescriptor = &gdt[index]; // Indexamos en la gdt
+    tss_t* tss = (tss_t*)((taskDescriptor->base_15_0) |
+        (taskDescriptor->base_23_16 << 16) |
+        (taskDescriptor->base_31_24 << 24));
+    return tss->cr3;
 }

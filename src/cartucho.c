@@ -8,6 +8,7 @@
 #include "mmu.h"
 #include "tasks.h"
 #include "sched.h"
+#include "buffer.h"
 
 extern sched_entry_t sched_tasks[MAX_TASKS];
 
@@ -18,21 +19,22 @@ void deviceready(void){
         if(task -> accessModeToVideoBuffer == TASK_NO_VIDEO_BUFFER_ACCESS){
             continue; 
         }
-
+        int16_t task_selector = task -> selector;
         if(task -> state == TASK_BLOCKED){  
-            int16_t task_selector = task -> selector;
+            
             if(task -> accessModeToVideoBuffer == TASK_DMA_VIDEO_BUFFER_ACCESS){ 
-                buffer_dma(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)));
+                buffer_dma((pd_entry_t*) CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)));
             }else{//va por copia
                 paddr_t phys = mmu_next_free_user_page(); //se utiliza página porque necesitamos una copia por cada tarea.
                 vaddr_t virt = task -> vaddrToVideoBuffer;
-                buffer_copy(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)), phys, virt);
+               buffer_copy((pd_entry_t*) CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)), phys, virt);
+
             }
 
             task -> state = TASK_RUNNABLE;
         }else { 
             if(task->accessModeToVideoBuffer == TASK_COPY_VIDEO_BUFFER_ACCESS){
-            paddr_t destino = virt_to_phy(task_selector_to_CR3(task_selector), tarea->copyDir);
+            paddr_t destino = virt_to_phy(task_selector_to_CR3(task_selector), task->vaddrToVideoBuffer);
             copy_page((paddr_t)0xF151C000, destino);
             }
         }
