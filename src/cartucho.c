@@ -24,7 +24,7 @@ void deviceready(void){
             if(task -> accessModeToVideoBuffer == TASK_DMA_VIDEO_BUFFER_ACCESS){ 
                 buffer_dma(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)));
             }else{//va por copia
-                paddr_t phys = mmu_next_free_user_page(); //¿por qué no kernel? 
+                paddr_t phys = mmu_next_free_user_page(); //se utiliza página porque necesitamos una copia por cada tarea.
                 vaddr_t virt = task -> vaddrToVideoBuffer;
                 buffer_copy(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)), phys, virt);
             }
