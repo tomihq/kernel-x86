@@ -9,30 +9,32 @@
 #include "tasks.h"
 #include "sched.h"
 
-extern mmu_map_page
+extern sched_entry_t sched_tasks[MAX_TASKS];
+
 
 void deviceready(void){
     for(int i = 0; i<MAX_TASKS; i++){
         sched_entry_t* task = &sched_tasks[i];
-        if(task -> mode == TASK_NO_VIDEO_BUFFER_ACCESS){
-            continue; //si la tarea no es de cartucho.
+        if(task -> accessModeToVideoBuffer == TASK_NO_VIDEO_BUFFER_ACCESS){
+            continue; 
         }
 
-        //Si la tarea está bloqueada significa que nunca le dimos el device ready
         if(task -> state == TASK_BLOCKED){  
-            if(task -> mode == TASK_DMA_VIDEO_BUFFER_ACCESS){ //quiere acceso directo.
-                //necesito mappear la dirección virtual 0xBABAB000 a la dirección 0xF151C000
-                //necesito antes encontrar el directorio de páginas de la tarea. voy a usar mmu_map_page void mmu_map_page(uint32_t cr3, vaddr_t virt, paddr_t phy, uint32_t attrs)
-                //los permisos deberían ser presente, r/w para usuario.
-                //No obstante, de todo esto se encarga: void buffer_dma(pd_entry_t* pd). Que le necesito mandar el puntero al CR3 de la tarea.
-                int16_t task_selector = task -> selector;
+            int16_t task_selector = task -> selector;
+            if(task -> accessModeToVideoBuffer == TASK_DMA_VIDEO_BUFFER_ACCESS){ 
                 buffer_dma(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)));
-                
-
+            }else{//va por copia
+                paddr_t phys = mmu_next_free_user_page(); //¿por qué no kernel? 
+                vaddr_t virt = task -> vaddrToVideoBuffer;
+                buffer_copy(CR3_TO_PAGE_DIR(task_selector_to_CR3(task_selector)), phys, virt);
             }
 
-        }else { //Si la tarea está en cualquier otro estado y la tarea es de cartucho actualizo todo. 
-
+            task -> state = TASK_RUNNABLE;
+        }else { 
+            if(task->accessModeToVideoBuffer == TASK_COPY_VIDEO_BUFFER_ACCESS){
+            paddr_t destino = virt_to_phy(task_selector_to_CR3(task_selector), tarea->copyDir);
+            copy_page((paddr_t)0xF151C000, destino);
+            }
         }
 
     }

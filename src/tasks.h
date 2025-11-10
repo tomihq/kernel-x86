@@ -21,4 +21,5 @@ void tasks_screen_draw(void);
 void tasks_input_process(uint8_t scancode);
 void tasks_tick(void);
 
+uint32_t task_selector_to_CR3(uint16_t selector);
 #endif //  __TASK_H__
