@@ -97,6 +97,8 @@ void idt_init() {
 
   // COMPLETAR: Syscalls
   IDT_ENTRY3(88);
+  IDT_ENTRY3(90);
+  IDT_ENTRY3(91);
   IDT_ENTRY3(98);
 }
 
