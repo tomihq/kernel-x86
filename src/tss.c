@@ -84,6 +84,29 @@ tss_t tss_create_user_task(paddr_t code_start) {
   };
 }
 
+tss_t tss_create_kernel_task(paddr_t code_start) {
+  uint32_t cr3 = mmu_init_task_kernel_dir(code_start);
+  vaddr_t stack = TASK_STACK_BASE;
+  vaddr_t code_virt = TASK_CODE_VIRTUAL;
+  vaddr_t stack0 = mmu_next_free_kernel_page();
+  vaddr_t esp0 = stack0 + PAGE_SIZE;
+  return (tss_t) {
+    .cr3 = cr3,
+    .esp = stack,
+    .ebp = stack,
+    .eip = code_virt,
+    .cs = GDT_CODE_3_SEL,
+    .ds = GDT_DATA_3_SEL,
+    .es = GDT_DATA_3_SEL,
+    .fs = GDT_DATA_3_SEL,
+    .gs = GDT_DATA_3_SEL,
+    .ss = GDT_DATA_3_SEL,
+    .ss0 = GDT_DATA_0_SEL,
+    .esp0 = esp0,
+    .eflags = EFLAGS_IF,
+  };
+}
+
 /**
  * Inicializa las primeras entradas de tss (inicial y idle)
  */

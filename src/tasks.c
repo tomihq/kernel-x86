@@ -24,6 +24,7 @@ void tasks_screen_draw();
 typedef enum {
   TASK_A = 0,
   TASK_B = 1,
+  TASK_C = 2
 } tipo_e;
 
 /**
@@ -33,6 +34,7 @@ typedef enum {
 static paddr_t task_code_start[2] = {
     [TASK_A] = TASK_A_CODE_START,
     [TASK_B] = TASK_B_CODE_START,
+    [TASK_C] = TASK_C_CODE_START
 };
 
 /**
@@ -49,6 +51,21 @@ static int8_t create_task(tipo_e tipo) {
 
   int8_t task_id = sched_add_task(gdt_id << 3);
   tss_tasks[task_id] = tss_create_user_task(task_code_start[tipo]);
+  gdt[gdt_id] = tss_gdt_entry_for_task(&tss_tasks[task_id]);
+  return task_id;
+}
+
+static int8_t create_kernel_task(tipo_e tipo) {
+  size_t gdt_id;
+  for (gdt_id = GDT_TSS_START; gdt_id < GDT_COUNT; gdt_id++) {
+    if (gdt[gdt_id].p == 0) {
+      break;
+    }
+  }
+  kassert(gdt_id < GDT_COUNT, "No hay entradas disponibles en la GDT");
+
+  int8_t task_id = sched_add_task(gdt_id << 3);
+  tss_tasks[task_id] = tss_create_kernel_task(task_code_start[tipo]);
   gdt[gdt_id] = tss_gdt_entry_for_task(&tss_tasks[task_id]);
   return task_id;
 }
@@ -71,6 +88,10 @@ void tasks_init(void) {
 
   // Creamos las tareas de tipo B
   task_id = create_task(TASK_B);
+  sched_enable_task(task_id);
+
+  //Creamos el garbage collector
+  task_id = create_kernel_task(TASK_C);
   sched_enable_task(task_id);
   
 }

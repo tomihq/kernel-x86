@@ -120,3 +120,9 @@ uint16_t sched_next_task(void) {
   // selector.
   return GDT_IDX_TASK_IDLE << 3;
 }
+
+void check_garbage_collector(void){
+  if (ENVIRONMENT->tick_count % 100 == 0) {
+        sched_tasks[GARBAGE_COLLECTOR_TASK_ID].state = TASK_RUNNABLE;
+    }
+}

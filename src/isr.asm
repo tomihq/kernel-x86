@@ -28,6 +28,7 @@ extern tasks_tick
 extern tasks_screen_update
 extern tasks_syscall_draw
 extern tasks_input_process
+extern check_garbage_collector
 
 ;; Definición de MACROS
 ;; -------------------------------------------------------------------------- ;;
@@ -196,6 +197,7 @@ _isr32:
     .fin:
     ; Se restauran los registros de proposito general desde el stack.
     call tasks_tick
+    call check_garbage_collector
     call tasks_screen_update
     popad
     ; Se le devuelve el control a la tarea a la que le toca ejecutar.

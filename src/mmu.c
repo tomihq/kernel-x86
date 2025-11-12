@@ -231,6 +231,21 @@ paddr_t mmu_init_task_dir(paddr_t phy_start) {
 
 }
 
+
+paddr_t mmu_init_task_kernel_dir(paddr_t phy_start) {
+  paddr_t pd_phys = mmu_next_free_kernel_page(); 
+  pd_entry_t* pd = (pd_entry_t*) pd_phys;
+  zero_page(pd_phys);
+  uint32_t cr3 = (uint32_t)pd_phys; 
+
+  for (size_t i = 0; i <= identity_mapping_end / PAGE_SIZE; i++) {
+      mmu_map_page(cr3, i * PAGE_SIZE, i * PAGE_SIZE, MMU_P | MMU_W);
+  }
+
+  return cr3;
+
+}
+
 // COMPLETAR: devuelve true si se atendió el page fault y puede continuar la ejecución 
 // y false si no se pudo atender
 // EL ON_DEMAND_MEM_START_VRITUAL y ON_DEMAND_MEM_END_VIRTUAL es nada más un rango que se pone en direcciones virtuales para entender que si alguien llegó a esos lugares es porque solicita una nueva página virtual para acceder a una región específica de la memoria física.
