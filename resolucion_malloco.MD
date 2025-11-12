@@ -214,11 +214,46 @@ El código de garbage_collector no blanqueará en absoluto el ticks_count porque
 Notar que acá no tengo absolutamente nada de la información de las tareas porque estoy en otra tarea. Tengo que jugar con el MAX_TASKS y el array que tengo en memoria de reservas_por_tarea que asumo que está en algún lugar de la memoria. 
 
 ```
-    void garbage_collector(void){
+mmu.c
+La vamos a necesitar para obtener el directorio de páginas de la tarea.
+
+uint32_t get_cr3_by_selector(uint16_t selector){
+  uint32_t index = selector >> 3;
+  gdt_entry_t entry_gdt = gdt[index];
+  uint32_t base = 
+    (entry_gdt.base_0_15) |
+    (entry_gdt.base_16_23 << 16) |
+    (entry_gdt.base_24_31 << 24);
+  return tss -> cr3;
+}
+
+    
+void garbage_collector(void){
         while(true){
             for(int i = 0; i<MAX_TASKS; i++){
-                sched_entry
+
+             int16_t sched_task_selector = sched_tasks[i] -> selector;
+             uint32_t cr3 = get_cr3_by_selector(sched_task_selector);
+             int16_t task_id = sched_task_selector >> 3;
+             //necesito desmapear todas las tareas del cr3 y despues en el array ponerlas en estado 3 si estan en estado 2
+             reservas_por_tarea* reservas = dameReservas(task_id);
+                
+                for(int j = 0; j<reservas -> reservas_size; j++){
+                  reserva_t reserva = reservas[i];
+                  if(reserva -> estado != 2){
+                    continue;
+                  }
+                  
+                  //eliminamos TODAS las páginas físicas mappeadas desde la virtual en adelante.
+                  for(int h = 0; h < reserva->tamanio / PAGE_SIZE; h++){
+                        mmu_unmap_page(cr3, virt);
+                        virt += PAGE_SIZE * j; 
+                  }
+
+                  reserva -> estado = 3; 
+                }
+
             }
         }
-    }
+}
 ```

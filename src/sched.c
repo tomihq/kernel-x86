@@ -127,11 +127,30 @@ void check_garbage_collector(void){
         sched_tasks[GARBAGE_COLLECTOR_TASK_ID].state = TASK_RUNNABLE;
     }
 }
-
 void garbage_collector(void){
         while(true){
             for(int i = 0; i<MAX_TASKS; i++){
-                int16_t sched_task_selector = sched_tasks[i] -> selector;
+
+             int16_t sched_task_selector = sched_tasks[i] -> selector;
+             uint32_t cr3 = get_cr3_by_selector(sched_task_selector);
+             int16_t task_id = sched_task_selector >> 3;
+             //necesito desmapear todas las tareas del cr3 y despues en el array ponerlas en estado 3 si estan en estado 2
+             reservas_por_tarea* reservas = dameReservas(task_id);
+                
+                for(int j = 0; j<reservas -> reservas_size; j++){
+                  reserva_t reserva = reservas[i];
+                  if(reserva -> estado != 2){
+                    continue;
+                  }
+                  
+                  //eliminamos TODAS las páginas físicas mappeadas desde la virtual en adelante.
+                  for(int h = 0; h < reserva->tamanio / PAGE_SIZE; h++){
+                        mmu_unmap_page(cr3, virt);
+                        virt += PAGE_SIZE * j; 
+                  }
+
+                  reserva -> estado = 3; 
+                }
 
             }
         }

@@ -35,7 +35,7 @@ paddr_t mmu_init_kernel_dir(void);
 
 paddr_t mmu_init_task_dir(paddr_t phy_start);
 
-uint32_t get_cr3_by_selector(uint16_t selector);
+uint32_t get_cr3_by_selector(int16_t selector);
 
 bool page_fault_handler(vaddr_t virt);
 
