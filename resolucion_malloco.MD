@@ -270,3 +270,30 @@ void garbage_collector(void){
 
 3. a. La estructura que lleva el registro de las reservas podría estar tranquilamente en espacio de memoria Kernel porque es el único que debería tener acceso junto al Garbage Collector de privilegio 0 que tiene identity-mapping con esa región. 
 b. Una implementación de Malloco podría ser
+```
+defines.h
+#define MB_4 4194304
+
+mmu.c
+void* malloco(size_t size){
+  reservas_por_tarea* reservas = sched_tasks[ENVIRONMENT -> task_id];
+  uint32_t tamanio_maximo_reservado = 0; 
+  uint32_t maxReservada = 0; 
+  for(int i = 0; i < reservas -> reservas_size; i++){
+    tamanio_maximo_reservado += reservas[i] -> tamanio;
+    //tengo la maxima direccion virtual ocupada (base + lo que ocupó en bytes)
+    maxReservada = reservas[i] -> virt + reservas[i] -> tamanio;
+  } 
+  if(tamanio_maximo_reservado > MB_4) return null;
+  reserva_t reserva_nueva = {
+    .virt = maxReservada,
+    .tamanio = size, 
+    .estado = 0
+  }
+  //se asume que array_reservas tiene espacio para poner algo nuevo. Es decir, de antemano se prepara ese espacio para que pueda ser escrito. 
+  reservas -> array_reservas[reservas_size] = reserva_nueva;
+  reservas -> reservas_size += 1; 
+
+  return (void*) maxReservada; 
+}
+```

@@ -5,7 +5,7 @@
 
   Definicion de funciones del manejador de memoria
 */
-
+#include "defines.h"
 #include "mmu.h"
 #include "i386.h"
 
@@ -317,7 +317,7 @@ void* malloco(size_t size){
     //tengo la maxima direccion virtual ocupada (base + lo que ocupó en bytes)
     maxReservada = reservas[i] -> virt + reservas[i] -> tamanio;
   } 
-  if(tamanio_maximo_reservado > 4MB) return null;
+  if(tamanio_maximo_reservado > MB_4) return null;
   reserva_t reserva_nueva = {
     .virt = maxReservada,
     .tamanio = size, 
@@ -326,5 +326,11 @@ void* malloco(size_t size){
   //se asume que array_reservas tiene espacio para poner algo nuevo. Es decir, de antemano se prepara ese espacio para que pueda ser escrito. 
   reservas -> array_reservas[reservas_size] = reserva_nueva;
   reservas -> reservas_size += 1; 
-  
+
+  return (void*) maxReservada; 
+}
+
+void chau(vaddr_t virt){
+  if(esMemoriaReservada(virt) == 0) return; 
+
 }
