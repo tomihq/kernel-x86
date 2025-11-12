@@ -259,10 +259,18 @@ bool page_fault_handler(vaddr_t virt) {
           paddr_r phy = next_free_user_page();
           zero_page(phy);
           mmu_map_page(virt, phy);
+          reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
+          for(int i = 0; i< reservas -> reservas_size; i++){
+            reserva_t reserva = reservas -> array_reservas[i];
+            if(reserva -> virt == virt){
+              reserva -> estado = 1; 
+            }
+          }
       }else{
            reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
            for(int i = 0; i<reservas -> reservas_size; i++){
-            array_reservas[i] -> estado = 2; 
+              reserva_t reserva = reservas -> array_reservas[i];
+              reserva -> estado = 2; 
            }
       }
     }
@@ -295,4 +303,28 @@ uint32_t get_cr3_by_selector(int16_t selector){
     (entry_gdt.base_16_23 << 16) |
     (entry_gdt.base_24_31 << 24);
   return tss -> cr3;
+}
+
+//Maximo 4MB de memoria. Es un SYSCALL. Tengo la tarea en CR3 y TR. Inclusive puedo usar el scheduler para saber la tarea actual.
+// Necesito sumar todos los tamanio de reserva_t obteniendo primero reservas_por_tarea* de dameReservas.
+// El area de memoria virtual que tengo que reservar es: direccionVirtualMaxReservada + tamanioReserva. A partir de ESA dirección ocupo el size que me pasan. 
+void* malloco(size_t size){
+  reservas_por_tarea* reservas = sched_tasks[ENVIRONMENT -> task_id];
+  uint32_t tamanio_maximo_reservado = 0; 
+  uint32_t maxReservada = 0; 
+  for(int i = 0; i < reservas -> reservas_size; i++){
+    tamanio_maximo_reservado += reservas[i] -> tamanio;
+    //tengo la maxima direccion virtual ocupada (base + lo que ocupó en bytes)
+    maxReservada = reservas[i] -> virt + reservas[i] -> tamanio;
+  } 
+  if(tamanio_maximo_reservado > 4MB) return null;
+  reserva_t reserva_nueva = {
+    .virt = maxReservada,
+    .tamanio = size, 
+    .estado = 0
+  }
+  //se asume que array_reservas tiene espacio para poner algo nuevo. Es decir, de antemano se prepara ese espacio para que pueda ser escrito. 
+  reservas -> array_reservas[reservas_size] = reserva_nueva;
+  reservas -> reservas_size += 1; 
+  
 }

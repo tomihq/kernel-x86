@@ -88,21 +88,31 @@ Cuando se quiera acceder a una región de memoria que todavía no haya sido mape
 mmu.c
     bool page_fault_handler(vaddr_t virt){
         ... prev
-         if(virt >= MALLOCO_MEM_START_VIRTUAL  && virt <= MALLOCO_MEM_END_VIRTUAL){
+          /* lo comento porque no tengo esMemoriaReservada ni dameReservas
+    if(virt >= MALLOCO_MEM_START_VIRTUAL  && virt <= MALLOCO_MEM_END_VIRTUAL){
       if(esMemoriaReservada(virt) == 1){
           paddr_r phy = next_free_user_page();
           zero_page(phy);
           mmu_map_page(virt, phy);
+          reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
+          for(int i = 0; i< reservas -> reservas_size; i++){
+            reserva_t reserva = reservas -> array_reservas[i];
+            if(reserva -> virt == virt){
+              reserva -> estado = 1; 
+            }
+          }
       }else{
            reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
            for(int i = 0; i<reservas -> reservas_size; i++){
-            array_reservas[i] -> estado = 2; 
-            sched_tasks[ENVIRONMENT -> task_id] = TASK_KILLED; //se asume que alguien "mata la tarea" liberando la memoria.
+              reserva_t reserva = reservas -> array_reservas[i];
+              reserva -> estado = 2; 
            }
       }
     }
+    */
         ...lo que sigue
     }
+Notar que MALLOCO_MEM_START_VIRTUAL arranca en 0xA10C0000 y MALLOCO_MEM_END_VIRTUAL sería 0xA10C0000 + 4MB más adelante.
 
 tasks.c
     typedef enum {
@@ -227,7 +237,7 @@ uint32_t get_cr3_by_selector(uint16_t selector){
   return tss -> cr3;
 }
 
-    
+sched.c
 void garbage_collector(void){
         while(true){
             for(int i = 0; i<MAX_TASKS; i++){
@@ -239,11 +249,11 @@ void garbage_collector(void){
              reservas_por_tarea* reservas = dameReservas(task_id);
                 
                 for(int j = 0; j<reservas -> reservas_size; j++){
-                  reserva_t reserva = reservas[i];
+                  reserva_t reserva = reservas -> array_reservas[i];
                   if(reserva -> estado != 2){
                     continue;
                   }
-                  
+
                   //eliminamos TODAS las páginas físicas mappeadas desde la virtual en adelante.
                   for(int h = 0; h < reserva->tamanio / PAGE_SIZE; h++){
                         mmu_unmap_page(cr3, virt);
@@ -257,3 +267,6 @@ void garbage_collector(void){
         }
 }
 ```
+
+3. a. La estructura que lleva el registro de las reservas podría estar tranquilamente en espacio de memoria Kernel porque es el único que debería tener acceso junto al Garbage Collector de privilegio 0 que tiene identity-mapping con esa región. 
+b. Una implementación de Malloco podría ser

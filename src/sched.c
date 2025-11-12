@@ -138,7 +138,7 @@ void garbage_collector(void){
              reservas_por_tarea* reservas = dameReservas(task_id);
                 
                 for(int j = 0; j<reservas -> reservas_size; j++){
-                  reserva_t reserva = reservas[i];
+                  reserva_t reserva = reservas -> array_reservas[i];
                   if(reserva -> estado != 2){
                     continue;
                   }
