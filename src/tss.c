@@ -83,27 +83,25 @@ tss_t tss_create_user_task(paddr_t code_start) {
     .eflags = EFLAGS_IF,
   };
 }
-
 tss_t tss_create_kernel_task(paddr_t code_start) {
   uint32_t cr3 = mmu_init_task_kernel_dir(code_start);
-  vaddr_t stack = TASK_STACK_BASE;
-  vaddr_t code_virt = TASK_CODE_VIRTUAL;
-  vaddr_t stack0 = mmu_next_free_kernel_page();
-  vaddr_t esp0 = stack0 + PAGE_SIZE;
+  vaddr_t code_virt = code_start;
+  vaddr_t stack_base = mmu_next_free_kernel_page();
+  addr_t stack_top = stack_base + PAGE_SIZE;
   return (tss_t) {
-    .cr3 = cr3,
-    .esp = stack,
-    .ebp = stack,
-    .eip = code_virt,
-    .cs = GDT_CODE_3_SEL,
-    .ds = GDT_DATA_3_SEL,
-    .es = GDT_DATA_3_SEL,
-    .fs = GDT_DATA_3_SEL,
-    .gs = GDT_DATA_3_SEL,
-    .ss = GDT_DATA_3_SEL,
-    .ss0 = GDT_DATA_0_SEL,
-    .esp0 = esp0,
-    .eflags = EFLAGS_IF,
+       .cr3 = cr3,
+        .eip = code_virt,
+        .esp = stack_top,
+        .ebp = stack_top,
+        .cs = GDT_CODE_0_SEL,
+        .ds = GDT_DATA_0_SEL,
+        .es = GDT_DATA_0_SEL,
+        .fs = GDT_DATA_0_SEL,
+        .gs = GDT_DATA_0_SEL,
+        .ss = GDT_DATA_0_SEL,
+        .ss0 = GDT_DATA_0_SEL,
+        .esp0 = stack_top,
+        .eflags = EFLAGS_IF
   };
 }
 
