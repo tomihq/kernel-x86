@@ -20,7 +20,8 @@
 typedef enum {
   TASK_SLOT_FREE,
   TASK_RUNNABLE,
-  TASK_PAUSED
+  TASK_PAUSED,
+  TASK_KILLED
 } task_state_t;
 
 /**

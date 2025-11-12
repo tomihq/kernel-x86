@@ -1,5 +1,5 @@
 # Resolución
-1. Necesitamos varias cosas para resolver el ejercicio:
+Necesitamos varias cosas para resolver el ejercicio:
     a. Una "unidad" de manejo de memoria para cada tarea que se pueda reservar a través de Malloco. Las direcciones virtuales se mapearán desde `0xA10C0000` y las páginas físicas a utilizar se sacarán del área libre de tareas.
     Malloco tendrá que chequear que cada tarea no se haya excedido de los 4MB que puede solicitar. Si es así, retorna NULL. Si tenemos espacio, entonces tendríamos que indicar que acabamos de crear una nueva reserva (agregarle 1 al tamaño del array) y agregar el contenido al array. Devuelve el puntero al inicio de la página. 
     b. Dos SYSCALLS: una para `malloco` y otra para `chau`. Ambas SYSCALLS deberán tener su handler correspondiente que definiremos en la IDT que recibirán por la pila el size y la dircción virtual respectivamente. Para hacer el proceso haremos un salto desde ASM a C pasando los parámetros por la pila.
@@ -15,7 +15,7 @@
     e. Chau tendremos que usar esMemoriaReservada(virt), esta nos dirá si está reservada mediante malloco. Si la respuesta es sí, entonces buscamos esa reserva de malloco y le clavamos el estado = 2. El resto se encargará el Garbage Collector. 
 
 Ahora sí, veamos qué cambios necesitaríamos asumiendo que todo está implementado.
-1. Definimos las SYSCALLS en la IDT.
+1.A. Definimos las SYSCALLS en la IDT.
 ```
 isr.h 
     void _isr90();
@@ -24,7 +24,7 @@ idt.c
     IDT_ENTRY3(90); //malloco
     IDT_ENTRY3(91); //chau
 ```
-2. Creamos las rutinas de atención que correspondan
+1.B. Creamos las rutinas de atención que correspondan
 ```
 global _isr90
 _isr90:
@@ -48,7 +48,7 @@ _isr91:
 
 Como ninguna interrupción viene del pic no hace falta hacer picfinish.
 ```
-3. Extendemos la rutina del reloj para que ahora luego de incrementar el tick de las tareas chequee si es el turno del garbage collector
+1.C. Extendemos la rutina del reloj para que ahora luego de incrementar el tick de las tareas chequee si es el turno del garbage collector
 ```
 extern check_garbage_collector
 global _isr32
@@ -80,7 +80,43 @@ void check_garbage_collector(void){
 }
 ```
 
-Ahora necesitamos crear la tarea
+Con esto deberíamos terminar suponiendo que el código de garbage_collector, malloc y chau están implementados.
+
+Cuando se quiera acceder a una región de memoria que todavía no haya sido mapeada a una página física va a caer en el page_fault_handler. La dirección que falló me cae en CR2 así que no tengo que cambiar nada de la rutina de atención pero sí del código de C. 
+
+```
+mmu.c
+    bool page_fault_handler(vaddr_t virt){
+        ... prev
+         if(virt >= MALLOCO_MEM_START_VIRTUAL  && virt <= MALLOCO_MEM_END_VIRTUAL){
+      if(esMemoriaReservada(virt) == 1){
+          paddr_r phy = next_free_user_page();
+          zero_page(phy);
+          mmu_map_page(virt, phy);
+      }else{
+           reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
+           for(int i = 0; i<reservas -> reservas_size; i++){
+            array_reservas[i] -> estado = 2; 
+            sched_tasks[ENVIRONMENT -> task_id] = TASK_KILLED; //se asume que alguien "mata la tarea" liberando la memoria.
+           }
+      }
+    }
+        ...lo que sigue
+    }
+
+tasks.c
+    typedef enum {
+    TASK_SLOT_FREE,
+    TASK_RUNNABLE,
+    TASK_PAUSED,
+    TASK_KILLED !acá
+    } task_state_t;
+
+
+```
+
+2. Necesitamos indicar qué cambios necesitamos para llamar al garbage_collector y dar una posible implementación.
+
 ```
 
 typedef enum {
@@ -92,7 +128,7 @@ typedef enum {
 static paddr_t task_code_start[2] = {
     [TASK_A] = TASK_A_CODE_START,
     [TASK_B] = TASK_B_CODE_START,
-    [TASK_C] = TASK_C_CODE_START //asumimos que es una dirección válida y existente.
+    [TASK_C] = TASK_C_CODE_START //asumimos que es una dirección válida y existente de la implementación de garbage_collector
 };
 
 void tasks_init(void) {
@@ -168,3 +204,7 @@ Notar que eliminamos lo shared y el mapeo de páginas de código virtual que pue
 
 
 ```
+
+El código de garbage_collector no blanqueará en absoluto el ticks_count porque es la rutina del reloj que le dice: che es tu turno y hasta que no termina de hacer lo que hace, no sigue otra tarea.
+
+Una posible implementación podría ser

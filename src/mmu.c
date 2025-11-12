@@ -253,6 +253,21 @@ bool page_fault_handler(vaddr_t virt) {
     print("Atendiendo page fault...", 0, 0, C_FG_WHITE | C_BG_BLACK);
     uint32_t cr3 = rcr3();
 
+    /* lo comento porque no tengo esMemoriaReservada ni dameReservas
+    if(virt >= MALLOCO_MEM_START_VIRTUAL  && virt <= MALLOCO_MEM_END_VIRTUAL){
+      if(esMemoriaReservada(virt) == 1){
+          paddr_r phy = next_free_user_page();
+          zero_page(phy);
+          mmu_map_page(virt, phy);
+      }else{
+           reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
+           for(int i = 0; i<reservas -> reservas_size; i++){
+            array_reservas[i] -> estado = 2; 
+           }
+      }
+    }
+    */
+
     if (virt >= ON_DEMAND_MEM_START_VIRTUAL && virt <= ON_DEMAND_MEM_END_VIRTUAL) {
         //uso solamente next_free_on_demand_page porque solo hay una unica página disponible fisicamente para bajo demanda. 
         paddr_t phys_page = next_free_on_demand_page;
