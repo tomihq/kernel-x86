@@ -48,3 +48,123 @@ _isr91:
 
 Como ninguna interrupción viene del pic no hace falta hacer picfinish.
 ```
+3. Extendemos la rutina del reloj para que ahora luego de incrementar el tick de las tareas chequee si es el turno del garbage collector
+```
+extern check_garbage_collector
+global _isr32
+_isr32:
+    pushad
+    call pic_finish1
+    call sched_next_task
+
+    str cx
+    cmp ax, cx
+    je .fin
+
+    jmp far [sched_task_offset]
+
+    .fin:
+    ; Se restauran los registros de proposito general desde el stack.
+    call tasks_tick
+    call check_garbage_collector ¡aca!
+    call tasks_screen_update
+    popad
+    iret
+```
+donde el código de check_garbage_collector está en sched.c
+```
+void check_garbage_collector(void){
+  if (ENVIRONMENT->tick_count % 100 == 0) {
+        sched_tasks[GARBAGE_COLLECTOR_TASK_ID].state = TASK_RUNNABLE;
+    }
+}
+```
+
+Ahora necesitamos crear la tarea
+```
+
+typedef enum {
+  TASK_A = 0,
+  TASK_B = 1,
+  TASK_C = 2
+} tipo_e;
+
+static paddr_t task_code_start[2] = {
+    [TASK_A] = TASK_A_CODE_START,
+    [TASK_B] = TASK_B_CODE_START,
+    [TASK_C] = TASK_C_CODE_START //asumimos que es una dirección válida y existente.
+};
+
+void tasks_init(void) {
+  int8_t task_id;
+  ... anterior
+  task_id = create_kernel_task(TASK_C);
+  sched_enable_task(task_id);
+}
+
+static int8_t create_kernel_task(tipo_e tipo) {
+  size_t gdt_id;
+  for (gdt_id = GDT_TSS_START; gdt_id < GDT_COUNT; gdt_id++) {
+    if (gdt[gdt_id].p == 0) {
+      break;
+    }
+  }
+  kassert(gdt_id < GDT_COUNT, "No hay entradas disponibles en la GDT");
+
+  int8_t task_id = sched_add_task(gdt_id << 3);
+  tss_tasks[task_id] = tss_create_kernel_task(task_code_start[tipo]);
+  gdt[gdt_id] = tss_gdt_entry_for_task(&tss_tasks[task_id]);
+  return task_id;
+}
+
+tss_t tss_create_kernel_task(paddr_t code_start) {
+  uint32_t cr3 = mmu_init_task_kernel_dir(code_start);
+  vaddr_t code_virt = code_start;
+  vaddr_t stack_base = mmu_next_free_kernel_page();
+  addr_t stack_top = stack_base + PAGE_SIZE;
+  return (tss_t) {
+       .cr3 = cr3,
+        .eip = code_virt,
+        .esp = stack_top,
+        .ebp = stack_top,
+        .cs = GDT_CODE_0_SEL,
+        .ds = GDT_DATA_0_SEL,
+        .es = GDT_DATA_0_SEL,
+        .fs = GDT_DATA_0_SEL,
+        .gs = GDT_DATA_0_SEL,
+        .ss = GDT_DATA_0_SEL,
+        .ss0 = GDT_DATA_0_SEL,
+        .esp0 = stack_top,
+        .eflags = EFLAGS_IF
+  };
+}
+
+Consideraciones:
+1. La tarea al ser de Kernel usamos segmentos de Kernel.
+2. La pila de nivel 0 es única, y le dejamos una página.
+3. El code_virt = code_start porque el código del Garbage Collector está en región de memoria Kernel y funciona con identity mapping.
+
+
+paddr_t mmu_init_task_kernel_dir(paddr_t phy_start) {
+  paddr_t pd_phys = mmu_next_free_kernel_page(); 
+  pd_entry_t* pd = (pd_entry_t*) pd_phys;
+  zero_page(pd_phys);
+  uint32_t cr3 = (uint32_t)pd_phys; 
+
+  for (size_t i = 0; i <= identity_mapping_end / PAGE_SIZE; i++) {
+      mmu_map_page(cr3, i * PAGE_SIZE, i * PAGE_SIZE, MMU_P | MMU_W);
+  }
+
+  //hacemos el identity mapping del código del garbage collector
+  mmu_map_page(cr3, phy_start, phy_start, MMU_P | MMU_W);
+  mmu_map_page(cr3, phy_start + PAGE_SIZE, phy_start + PAGE_SIZE, MMU_P | MMU_W);
+
+
+  return cr3;
+
+}
+
+Notar que eliminamos lo shared y el mapeo de páginas de código virtual que pueda acceder un usuario. Esto es porque ahora nuestro código vive en región de memoria Kernel y es accedido por el Kernel a través de identity mapping.
+
+
+```
