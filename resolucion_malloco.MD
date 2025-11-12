@@ -118,7 +118,9 @@ tasks.c
 2. Necesitamos indicar qué cambios necesitamos para llamar al garbage_collector y dar una posible implementación.
 
 ```
-
+task_defines.h
+    #define MAX_TASKS     5 // agrego una tarea mas para el garbage collector
+tasks.c
 typedef enum {
   TASK_A = 0,
   TASK_B = 1,
@@ -153,6 +155,8 @@ static int8_t create_kernel_task(tipo_e tipo) {
   return task_id;
 }
 
+tss.c
+
 tss_t tss_create_kernel_task(paddr_t code_start) {
   uint32_t cr3 = mmu_init_task_kernel_dir(code_start);
   vaddr_t code_virt = code_start;
@@ -180,6 +184,7 @@ Consideraciones:
 2. La pila de nivel 0 es única, y le dejamos una página.
 3. El code_virt = code_start porque el código del Garbage Collector está en región de memoria Kernel y funciona con identity mapping.
 
+mmu.c
 
 paddr_t mmu_init_task_kernel_dir(paddr_t phy_start) {
   paddr_t pd_phys = mmu_next_free_kernel_page(); 
@@ -206,5 +211,14 @@ Notar que eliminamos lo shared y el mapeo de páginas de código virtual que pue
 ```
 
 El código de garbage_collector no blanqueará en absoluto el ticks_count porque es la rutina del reloj que le dice: che es tu turno y hasta que no termina de hacer lo que hace, no sigue otra tarea.
+Notar que acá no tengo absolutamente nada de la información de las tareas porque estoy en otra tarea. Tengo que jugar con el MAX_TASKS y el array que tengo en memoria de reservas_por_tarea que asumo que está en algún lugar de la memoria. 
 
-Una posible implementación podría ser
+```
+    void garbage_collector(void){
+        while(true){
+            for(int i = 0; i<MAX_TASKS; i++){
+                sched_entry
+            }
+        }
+    }
+```

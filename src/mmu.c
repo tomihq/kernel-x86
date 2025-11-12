@@ -286,3 +286,13 @@ void test_on_demand_write_1(){
 void test_on_demand_write_2(){
   page_fault_handler(0x07000000);
 }
+
+uint32_t get_cr3_by_selector(uint16_t selector){
+  uint32_t index = selector >> 3;
+  gdt_entry_t entry_gdt = gdt[index];
+  uint32_t base = 
+    (entry_gdt.base_0_15) |
+    (entry_gdt.base_16_23 << 16) |
+    (entry_gdt.base_24_31 << 24);
+  return tss -> cr3;
+}

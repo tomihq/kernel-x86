@@ -7,7 +7,7 @@
 */
 
 #include "sched.h"
-
+#include "mmu.h"
 #include "i386.h"
 #include "kassert.h"
 
@@ -126,4 +126,13 @@ void check_garbage_collector(void){
   if (ENVIRONMENT->tick_count % 100 == 0) {
         sched_tasks[GARBAGE_COLLECTOR_TASK_ID].state = TASK_RUNNABLE;
     }
+}
+
+void garbage_collector(void){
+        while(true){
+            for(int i = 0; i<MAX_TASKS; i++){
+                int16_t sched_task_selector = sched_tasks[i] -> selector;
+
+            }
+        }
 }

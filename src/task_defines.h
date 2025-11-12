@@ -17,6 +17,7 @@
 
 #define TASK_A_CODE_START (0x00018000)
 #define TASK_B_CODE_START (0x0001A000)
+#define TASK_C_CODE_START (0x0002A000) //asumo que acá arranca el garbage collector.
 #define TASK_IDLE_CODE_START   (0x0001C000)
 
 /* EFLAGS */
@@ -25,7 +26,7 @@
 
 /* Constantes Generales */
 
-#define MAX_TASKS     (2 * 2)
+#define MAX_TASKS     5
 #define GDT_TSS_START 13
 
 /* Interfaz gráfica del sistema */
