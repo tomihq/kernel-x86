@@ -28,13 +28,23 @@ idt.c
 ```
 global _isr90
 _isr90:
-  pushad ;preservo registros
+  pushad ;preservo 
   push eax ;pusheo como parámetro la dirección virt que me mandan
   call malloco
   add esp, 4 ;vuelvo a alinear la pila
   mov [esp + offset_EAX], eax ;almaceno en eax el resultado de malloco así lo devuelvo
-  jmp .fin
-  .fin:
+  popad
+  iret  
+
+
+global _isr91
+_isr91:
+    pushad ;preservo
+    push eax ;preparo el parámetro
+    call chau
+    add esp, 4 ;vuelvo a alinear la pila
     popad
     iret
+
+Como ninguna interrupción viene del pic no hace falta hacer picfinish.
 ```
