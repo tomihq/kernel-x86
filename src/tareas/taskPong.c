@@ -101,9 +101,9 @@ bool should_score_against(ball* ball, player* player) {
  */
 void update_shared_record_score(pong* pong) {
 	uint8_t task_id = ENVIRONMENT->task_id;
-	uint32_t* current_task_record = (uint32_t*) (SHARED_SCORE_BASE_VADDR + ((uint32_t) task_id * sizeof(uint32_t)*2));
-	current_task_record[0] = pong->player1.score;
-	current_task_record[1] = pong->player2.score;
+	uint32_t* ENVIRONMENT -> task_id_record = (uint32_t*) (SHARED_SCORE_BASE_VADDR + ((uint32_t) task_id * sizeof(uint32_t)*2));
+	ENVIRONMENT -> task_id_record[0] = pong->player1.score;
+	ENVIRONMENT -> task_id_record[1] = pong->player2.score;
 }
 
 /**

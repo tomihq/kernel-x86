@@ -39,7 +39,7 @@ static sched_entry_t sched_tasks[MAX_TASKS] = {0};
  * Tarea actualmente en ejecución (excepto que esté pasuada, en cuyo caso se
  * corre la idle).
  */
-int8_t current_task = 0;
+int8_t ENVIRONMENT -> task_id = 0;
 
 /**
  * Agrega una tarea al primer slot libre
@@ -101,7 +101,7 @@ void sched_init(void) {
 uint16_t sched_next_task(void) {
   // Buscamos la próxima tarea viva (comenzando en la actual)
   int8_t i;
-  for (i = (current_task + 1); (i % MAX_TASKS) != current_task; i++) {
+  for (i = (ENVIRONMENT -> task_id + 1); (i % MAX_TASKS) != ENVIRONMENT -> task_id; i++) {
     // Si esta tarea está disponible la ejecutamos
     if (sched_tasks[i % MAX_TASKS].state == TASK_RUNNABLE) {
       break;
@@ -113,7 +113,7 @@ uint16_t sched_next_task(void) {
 
   // Si la tarea que encontramos es ejecutable entonces vamos a correrla.
   if (sched_tasks[i].state == TASK_RUNNABLE) {
-    current_task = i;
+    ENVIRONMENT -> task_id = i;
     return sched_tasks[i].selector;
   }
 

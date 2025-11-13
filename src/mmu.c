@@ -259,7 +259,7 @@ bool page_fault_handler(vaddr_t virt) {
           paddr_r phy = next_free_user_page();
           zero_page(phy);
           mmu_map_page(virt, phy);
-          reservas_por_tarea* reservas = dameReservas(current_task);
+          reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
           for(int i = 0; i< reservas -> reservas_size; i++){
             reserva_t reserva = reservas -> array_reservas[i];
             if(reserva -> virt == virt){
@@ -267,7 +267,7 @@ bool page_fault_handler(vaddr_t virt) {
             }
           }
       }else{
-           reservas_por_tarea* reservas = dameReservas(current_task);
+           reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
            for(int i = 0; i<reservas -> reservas_size; i++){
               reserva_t reserva = reservas -> array_reservas[i];
               reserva -> estado = 2; 
@@ -309,7 +309,7 @@ uint32_t get_cr3_by_selector(int16_t selector){
 // Necesito sumar todos los tamanio de reserva_t obteniendo primero reservas_por_tarea* de dameReservas.
 // El area de memoria virtual que tengo que reservar es: direccionVirtualMaxReservada + tamanioReserva. A partir de ESA dirección ocupo el size que me pasan. 
 void* malloco(size_t size){
-  reservas_por_tarea* reservas = sched_tasks[current_task];
+  reservas_por_tarea* reservas = sched_tasks[ENVIRONMENT -> task_id];
   uint32_t tamanio_maximo_reservado = 0; 
   uint32_t maxReservada = 0; 
   for(int i = 0; i < reservas -> reservas_size; i++){
@@ -335,7 +335,7 @@ void* malloco(size_t size){
 //si me mandan nada que ver en virt el comportamiento es indefinido
 void chau(vaddr_t virt){
   if(esMemoriaReservada(virt) == 0) return; 
-  reservas_por_tarea* reservas = dameReservas(current_task);
+  reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
   for(int i = 0; i<reservas -> reservas_size; i++){
     reserva_t reserva = reservas -> array_reservas[i];
     if(reserva -> virt == virt){

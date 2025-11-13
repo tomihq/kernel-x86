@@ -94,7 +94,7 @@ mmu.c
           paddr_r phy = next_free_user_page();
           zero_page(phy);
           mmu_map_page(virt, phy);
-          reservas_por_tarea* reservas = dameReservas(current_task);
+          reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
           for(int i = 0; i< reservas -> reservas_size; i++){
             reserva_t reserva = reservas -> array_reservas[i];
             if(reserva -> virt == virt){
@@ -102,7 +102,7 @@ mmu.c
             }
           }
       }else{
-           reservas_por_tarea* reservas = dameReservas(current_task);
+           reservas_por_tarea* reservas = dameReservas(ENVIRONMENT -> task_id);
            for(int i = 0; i<reservas -> reservas_size; i++){
               reserva_t reserva = reservas -> array_reservas[i];
               reserva -> estado = 2; 
@@ -112,7 +112,7 @@ mmu.c
     */
         ...lo que sigue
     }
-Notar que MALLOCO_MEM_START_VIRTUAL arranca en 0xA10C0000 y MALLOCO_MEM_END_VIRTUAL sería 0xA10C0000 + 4MB más adelante y que current_task es la variable que usa el scheduler que te dice el id de la tarea actual
+Notar que MALLOCO_MEM_START_VIRTUAL arranca en 0xA10C0000 y MALLOCO_MEM_END_VIRTUAL sería 0xA10C0000 + 4MB más adelante y que ENVIRONMENT -> task_id es la variable que usa el scheduler que te dice el id de la tarea actual
 
 tasks.c
     typedef enum {
@@ -276,7 +276,7 @@ defines.h
 
 mmu.c
 void* malloco(size_t size){
-  reservas_por_tarea* reservas = sched_tasks[current_task];
+  reservas_por_tarea* reservas = sched_tasks[ENVIRONMENT -> task_id];
   uint32_t tamanio_maximo_reservado = 0; 
   uint32_t maxReservada = 0; 
   for(int i = 0; i < reservas -> reservas_size; i++){

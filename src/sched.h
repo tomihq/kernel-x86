@@ -12,7 +12,7 @@
 #include "types.h"
 #include "task_defines.h"
 
-extern int8_t current_task;
+extern int8_t ENVIRONMENT -> task_id;
 
 int8_t sched_add_task(uint16_t selector);
 void sched_disable_task(int8_t task_id);

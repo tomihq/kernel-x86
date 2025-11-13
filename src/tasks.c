@@ -108,7 +108,7 @@ void tasks_syscall_draw(ca viewport[TASK_VIEWPORT_HEIGHT][TASK_VIEWPORT_WIDTH]) 
   // Si el viewport termina después de la memoria de la tarea ignoramos la syscall
   // NOTA: `sizeof(*viewport)` nos da el tamaño del array :)
   if (TASK_SHARED_PAGE <= viewport_addr + sizeof(*viewport)) return;
-  int8_t task_id = current_task;
+  int8_t task_id = ENVIRONMENT -> task_id;
   kassert(task_id <= 3, "task_id fuera del rango valido!");
 
   // Calculamos la posición dónde arranca la pantallita de la tarea
@@ -152,7 +152,7 @@ void tasks_screen_update(void) {
   print("Corriendo", 70,  0, C_FG_BLUE | C_BG_BLUE);
   print("Corriendo", 30, 25, C_FG_RED  | C_BG_RED);
   print("Corriendo", 70, 25, C_FG_RED  | C_BG_RED);
-  switch (current_task) {
+  switch (ENVIRONMENT -> task_id) {
   case 0: /* Tarea 1A */
     print("Corriendo", 30,  0, C_FG_WHITE | C_BG_BLUE);
     break;
@@ -210,5 +210,5 @@ void tasks_input_process(uint8_t scancode) {
  */
 void tasks_tick(void) {
   ENVIRONMENT->tick_count++;
-  ENVIRONMENT->task_id = current_task;
+  ENVIRONMENT->task_id = ENVIRONMENT -> task_id;
 }

@@ -25,13 +25,13 @@ void task(void) {
 		task_print(pantalla, "Player 2", COLUMN_X(2) + SCOREBOARD_X_ORIGIN, SCOREBOARD_Y_ORIGIN, C_FG_BLACK | C_BG_WHITE);
 
 		for(size_t i = 0; i < CANT_PONGS; i++){
-			uint32_t* current_task_record = (uint32_t*) (SHARED_SCORE_BASE_VADDR + ((uint32_t) i  * sizeof(uint32_t)*2));
+			uint32_t* ENVIRONMENT -> task_id_record = (uint32_t*) (SHARED_SCORE_BASE_VADDR + ((uint32_t) i  * sizeof(uint32_t)*2));
 
 			task_print(pantalla, "Juego ", SCOREBOARD_X_ORIGIN, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_BLACK | C_BG_WHITE);
 			task_print_dec(pantalla, i + 1, 2, SCOREBOARD_X_ORIGIN + 6, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_BLACK | C_BG_WHITE);
 
-			task_print_dec(pantalla, current_task_record[0], 2, COLUMN_X(1) + SCOREBOARD_X_ORIGIN + 3, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_WHITE);
-			task_print_dec(pantalla, current_task_record[1], 2, COLUMN_X(2) + SCOREBOARD_X_ORIGIN + 3, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_WHITE);
+			task_print_dec(pantalla, ENVIRONMENT -> task_id_record[0], 2, COLUMN_X(1) + SCOREBOARD_X_ORIGIN + 3, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_WHITE);
+			task_print_dec(pantalla, ENVIRONMENT -> task_id_record[1], 2, COLUMN_X(2) + SCOREBOARD_X_ORIGIN + 3, SCOREBOARD_Y_ORIGIN + ROW_Y(i + 1), C_FG_WHITE);
 		}
 
 		syscall_draw(pantalla);
